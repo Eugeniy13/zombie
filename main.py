@@ -1,6 +1,5 @@
-from random import randrange as rnd, choice
+from random import randrange as rnd
 from tkinter import *
-import time
 
 root = Tk()
 root.geometry('800x600')
@@ -22,21 +21,22 @@ for r in range(N):
     a.append([])
     for c in range(N):
         k = int(rnd(100)/40 - 1.25)
-        a[r].append(k) #начальное положение
+        a[r].append(k)  # начальное положение
 
 
-class cell():
+class Cell():
+
     def __init__(self, r, c):  # при создании указываем номер строки и столбца, в который помещаем
         self.n = rnd(10)  # значение, с которым будем работать
         self.r = r  # Номер сторки в двумерном списке.
         self.c = c  # Номер столбца ...
-        if (a[r][c] == 0):
+        if a[r][c] == 0:
             self.color = 'white'
-        if (a[r][c] == 1):
+        if a[r][c] == 1:
             self.color = 'green'
-        if (a[r][c] == -1):
+        if a[r][c] == -1:
             self.color = 'red'
-        if (a[r][c] == 2):
+        if a[r][c] == 2:
             self.color = 'cyan'
         self.id = canv.create_rectangle(-100, 0, -100, 0, fill=self.color)
         self.paint()
@@ -50,43 +50,47 @@ class cell():
         y2 = y1 + m - 2 * d
         canv.coords(self.id, x1, y1, x2, y2)
         canv.itemconfig(self.id, fill=self.color)
-#графическое отображение
+# графическое отображение
 
 
 for y in range(N):
     for x in range(N):
-        c_test = cell(x, y)
+        c_test = Cell(x, y)
+
 
 def zombie_search(x, y):
-    l = 1
+    
+    le = 1
     found = 0
-    global nearest_goal
-    while found == 0 and l < 10 :
-        for i in range(2*l+1):
-            if (x+l > -1 and x+l < N and y-l+i > -1 and y-l+i < N and a[x+l][y-l+i] == 1):
-                nearest_goal = [x+l,y-l+i]
+    nearest_goal = None
+    while found == 0 and le < 10:
+        for i in range(2*le+1):
+            if N > x+le > -1 and N > y-le+i > -1 and a[x+le][y-le+i] == 1:
+                nearest_goal = [x+le, y-le+i]
                 found = 1
-            if (x-l+i > -1 and x-l+i < N and y-l > -1 and y-l < N and a[x-l+i][y-l] == 1):
-                nearest_goal = [x-l+i,y-l]
+            if N > x-le+i > -1 and N > y-le > -1 and a[x-le+i][y-le] == 1:
+                nearest_goal = [x-le+i, y-le]
                 found = 1
-            if (x-l > -1 and x-l < N and y+l-i > -1 and y+l-i < N and a[x-l][y+l-i] == 1):
-                nearest_goal = [x-l,y+l-i]
+            if N > x-le > -1 and N > y+le-i > -1 and a[x-le][y+le-i] == 1:
+                nearest_goal = [x-le, y+le-i]
                 found = 1
-            if (x+l-i > -1 and x+l-i < N and y+1 > -1 and y+1 < N and a[x+l-i][y+1] == 1):
-                nearest_goal = [x+l-i,y+1]
+            if N > x+le-i > -1 and N > y+1 > -1 and a[x+le-i][y+1] == 1:
+                nearest_goal = [x+le-i, y+1]
                 found = 1
-        l = l+1
+        le = le+1
+    return nearest_goal
     # поиск ближайшего человека
 
-def zombie_move(x,y):
-    zombie_search(x,y)
+
+def zombie_move(x, y):
+
+    nearest_goal = zombie_search(x, y)
     if abs(x - nearest_goal[0]) < 2 and abs(y - nearest_goal[1]) < 2:
         a[nearest_goal[0]][nearest_goal[1]] = 3
 
 
-
-
 for t in range(1):
+
     t = t + 1
     for y in range(N):
         for x in range(N):
@@ -97,11 +101,12 @@ for t in range(1):
 
     for y in range(N):
         for x in range(N):
-            if a[x][y] == 3: a[x][y] = -1
+            if a[x][y] == 3:
+                a[x][y] = -1
         # второй проход, люди становятся зомби
     for y in range(N):
         for x in range(N):
-            c_test = cell(x, y)
+            c_test = Cell(x, y)
 
 
 mainloop()
