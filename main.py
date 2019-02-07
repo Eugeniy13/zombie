@@ -19,10 +19,16 @@ y0 = m // 2  # отступ от вернего края
 colors = ['red', 'yellow', 'cyan', 'green']
 
 a = []
+P_h = 0.04
+P_z = 0.01
+
+a_point = (1 + P_h - P_z)/(1 - P_h - P_z)
+b_point = (-1 + P_h - P_z)/(1 - P_h - P_z)
 for r in range(N):
     a.append([])
     for c in range(N):
-        k = int(rnd(100)/40 - 1.25)
+        k = int(rnd(1000)*(a_point - b_point)/1000 + b_point)
+        #k = int(rnd(100)/40 - 1.25)
         a[r].append(k)  # начальное положение
 
 
@@ -123,7 +129,7 @@ def main():
     for y in range(N):
         for x in range(N):
             Cell(x, y)
-    root.after(4000, main)
+    root.after(500, main)
 
-root.after(4000, main)
+root.after(500, main)
 root.mainloop()
