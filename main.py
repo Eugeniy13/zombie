@@ -1,5 +1,6 @@
 from random import randrange as rnd
 from tkinter import *
+import math
 
 root = Tk()
 root.geometry('800x600')
@@ -7,9 +8,10 @@ root.geometry('800x600')
 canv = Canvas(root, bg='white')
 canv.pack(fill=BOTH, expand=1)
 
+t = 0
 m = 20  # размер ячеек
 d = 2  # размер поля вокруг ячейки
-N = 30
+N = 40
 nr = N  # количество строк
 nc = N  # количество столбцов
 x0 = m // 2  # отступ от левого края
@@ -41,6 +43,8 @@ class Cell():
         self.id = canv.create_rectangle(-100, 0, -100, 0, fill=self.color)
         self.paint()
 
+
+
     def paint(self):
         x1 = x0 + self.c * m + d
         # рассчитать координаты левого верхнего угла.
@@ -55,7 +59,11 @@ class Cell():
 
 for y in range(N):
     for x in range(N):
-        c_test = Cell(x, y)
+        Cell(x, y)
+        # задаем начальную таблицу
+
+
+
 
 
 def zombie_search(x, y):
@@ -63,7 +71,7 @@ def zombie_search(x, y):
     le = 1
     found = 0
     nearest_goal = None
-    while found == 0 and le < 10:
+    while found == 0 and le < 50:
         for i in range(2*le+1):
             if N > x+le > -1 and N > y-le+i > -1 and a[x+le][y-le+i] == 1:
                 nearest_goal = [x+le, y-le+i]
@@ -85,13 +93,21 @@ def zombie_search(x, y):
 def zombie_move(x, y):
 
     nearest_goal = zombie_search(x, y)
-    if abs(x - nearest_goal[0]) < 2 and abs(y - nearest_goal[1]) < 2:
+    print(nearest_goal)
+    if nearest_goal == None :
+        print('None')
+    elif abs(x - nearest_goal[0]) < 2 and abs(y - nearest_goal[1]) < 2:
         a[nearest_goal[0]][nearest_goal[1]] = 3
+    else :
+        dist = pow((nearest_goal[0] - x)*(nearest_goal[0] - x) + (nearest_goal[1] - y)*(nearest_goal[1] - y),0.5)
+        move_to = [math.floor(2*(nearest_goal[0] - x)/dist), math.floor(2*(nearest_goal[1] - y)/dist)]
+        if a[x + move_to[0]][y + move_to[1]] == 0:
+            a[x + move_to[0]][ y + move_to[1]] = -1
+            a[x][y] = 0
 
 
-for t in range(1):
+def main():
 
-    t = t + 1
     for y in range(N):
         for x in range(N):
             if a[x][y] == -1:
@@ -106,7 +122,8 @@ for t in range(1):
         # второй проход, люди становятся зомби
     for y in range(N):
         for x in range(N):
-            c_test = Cell(x, y)
+            Cell(x, y)
+    root.after(4000, main)
 
-
-mainloop()
+root.after(4000, main)
+root.mainloop()
