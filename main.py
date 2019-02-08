@@ -20,7 +20,7 @@ colors = ['red', 'yellow', 'cyan', 'green']
 
 a = []
 P_h = 0.04
-P_z = 0.01
+P_z = 0.003
 
 a_point = (1 + P_h - P_z)/(1 - P_h - P_z)
 b_point = (-1 + P_h - P_z)/(1 - P_h - P_z)
@@ -44,7 +44,7 @@ class Cell():
             self.color = 'green'
         if a[r][c] == -1:
             self.color = 'red'
-        if a[r][c] == 2:
+        if a[r][c] == 3:
             self.color = 'cyan'
         self.id = canv.create_rectangle(-100, 0, -100, 0, fill=self.color)
         self.paint()
@@ -70,14 +70,28 @@ for y in range(N):
 
 
 
+def count_human():
+    c_human = 0
+    for y in range(N):
+        for x in range(N):
+            if a[x][y] == 1:
+                c_human = c_human + 1
+    return c_human
 
+def count_zombie():
+    count_zombie = 0
+    for y in range(N):
+        for x in range(N):
+            if a[x][y] == -1:
+                count_zombie = count_zombie + 1
+    return count_zombie
 
 def zombie_search(x, y):
     
     le = 1
     found = 0
     nearest_goal = None
-    while found == 0 and le < 50:
+    while found == 0 and le < 1.42*N:
         for i in range(2*le+1):
             if N > x+le > -1 and N > y-le+i > -1 and a[x+le][y-le+i] == 1:
                 nearest_goal = [x+le, y-le+i]
@@ -95,25 +109,52 @@ def zombie_search(x, y):
     return nearest_goal
     # поиск ближайшего человека
 
+def the_end():
+    raise SystemExit
 
 def zombie_move(x, y):
 
     nearest_goal = zombie_search(x, y)
-    print(nearest_goal)
     if nearest_goal == None :
         print('None')
+        root.after(4000, the_end)
     elif abs(x - nearest_goal[0]) < 2 and abs(y - nearest_goal[1]) < 2:
         a[nearest_goal[0]][nearest_goal[1]] = 3
     else :
         dist = pow((nearest_goal[0] - x)*(nearest_goal[0] - x) + (nearest_goal[1] - y)*(nearest_goal[1] - y),0.5)
-        move_to = [math.floor(2*(nearest_goal[0] - x)/dist), math.floor(2*(nearest_goal[1] - y)/dist)]
-        if a[x + move_to[0]][y + move_to[1]] == 0:
-            a[x + move_to[0]][ y + move_to[1]] = -1
+        cos = (nearest_goal[0] - x)/dist
+        sin = (nearest_goal[1] - y)/dist
+        #move_to = [(nearest_goal[0] - x)/dist),(nearest_goal[1] - y)/dist)]
+        #print((nearest_goal[0] - x)/dist,(nearest_goal[1] - y)/dist)
+        angl = 0.316
+        movement = None
+        if (-angl) < sin < angl:
+            if cos > 0 :
+                movement = [1,0]
+            if cos < 0 :
+                movement = [-1, 0]
+        if (-angl) < cos < angl:
+            if sin > 0 :
+                movement = [0,1]
+            if sin < 0 :
+                movement = [0,-1]
+        if sin > angl and cos > angl :
+            movement = [1,1]
+        if sin < (-angl) and cos > angl :
+            movement = [1,-1]
+        if sin > angl and cos < (-angl) :
+            movement = [-1,1]
+        if sin < (-angl) and cos < (-angl) :
+            movement = [-1,-1]
+        if 0 < x + movement[0] < N and 0 < y + movement[1] < N and a[x + movement[0]][y + movement[1]] == 0:
+            a[x + movement[0]][y + movement[1]] = 3
             a[x][y] = 0
 
+time = 0
 
 def main():
-
+    global time
+    time = time + 1
     for y in range(N):
         for x in range(N):
             if a[x][y] == -1:
@@ -126,10 +167,15 @@ def main():
             if a[x][y] == 3:
                 a[x][y] = -1
         # второй проход, люди становятся зомби
+
+    human = count_human()
+    zombie = count_zombie()
+    print (time, zombie)
+
     for y in range(N):
         for x in range(N):
             Cell(x, y)
-    root.after(500, main)
+    root.after(300, main)
 
-root.after(500, main)
+root.after(4000, main)
 root.mainloop()
