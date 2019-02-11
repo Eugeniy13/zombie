@@ -19,9 +19,10 @@ y0 = m // 2  # отступ от вернего края
 colors = ['red', 'yellow', 'cyan', 'green']
 
 a = []
+troop_size = 10
 P_h = 0.1
-P_z = 0.07
-shoot_prob = 0.4
+P_z = 0.04
+shoot_prob = 0.5
 
 zombie_waitlist = []
 a_point = (1 + P_h - P_z)/(1 - P_h - P_z)
@@ -79,6 +80,7 @@ def count_human():
                 c_human = c_human + 1
     return c_human
 
+
 def count_zombie():
     count_zombie = 0
     for y in range(N):
@@ -86,6 +88,7 @@ def count_zombie():
             if a[x][y] == -1:
                 count_zombie = count_zombie + 1
     return count_zombie
+
 
 def zombie_search(x, y):
     
@@ -133,8 +136,11 @@ def human_search(x, y):
     return nearest_goal
     # поиск ближайшего зомби
 
+
+
 def the_end():
     raise SystemExit
+
 
 def zombie_move(x, y):
     global zombie_waitlist
@@ -178,6 +184,46 @@ def zombie_move(x, y):
 
 
 
+def friend_search(x,y):
+    center = [(int(x/troop_size)*troop_size + int(troop_size/2)), (int(y/troop_size)*troop_size + int(troop_size/2))]
+    dist = pow((center[0] - x)*(center[0] - x) + (center[1] - y)*(center[1] - y),0.5)
+    if dist == 0:
+        return
+    cos = (center[0] - x)/dist
+    sin = (center[1] - y)/dist
+    angl = 0.316
+    movement = None
+    if (-angl) < sin < angl:
+        if cos > 0:
+            movement = [1, 0]
+        if cos < 0:
+            movement = [-1, 0]
+    if (-angl) < cos < angl:
+        if sin > 0:
+            movement = [0, 1]
+        if sin < 0:
+            movement = [0, -1]
+    if sin > angl and cos > angl:
+        movement = [1, 1]
+    if sin < (-angl) and cos > angl:
+        movement = [1, -1]
+    if sin > angl and cos < (-angl):
+        movement = [-1, 1]
+    if sin < (-angl) and cos < (-angl):
+        movement = [-1, -1]
+    if 0 < x + movement[0] < N and 0 < y + movement[1] < N and a[x + movement[0]][y + movement[1]] == 0:
+        a[x + movement[0]][y + movement[1]] = 4
+        a[x][y] = 0
+    #elif a[x + movement[0]][y + movement[1]] == 1 or a[x + movement[0]][y + movement[1]] == 4:
+    #   human_waitlist.append([x,y])
+
+
+
+
+
+
+
+
 def human_move(x, y):
 
     nearest_goal = human_search(x, y)
@@ -188,13 +234,15 @@ def human_move(x, y):
                 a[nearest_goal[0]][nearest_goal[1]] = 0
         elif temp_prob < shoot_prob/2:
             a[nearest_goal[0]][nearest_goal[1]] = 0
-
+    else:
+        friend_search(x,y)
 
 
 
 
 
 time = 0
+
 
 def main():
     global time
@@ -222,6 +270,12 @@ def main():
             for x in range(N):
                 if a[x][y] == 1:
                     human_move(x, y)
+
+        for y in range(N):
+            for x in range(N):
+                if a[x][y] == 4:
+                    a[x][y] = 1
+        # второй проход
 
 
 
