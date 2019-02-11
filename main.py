@@ -19,16 +19,18 @@ y0 = m // 2  # отступ от вернего края
 colors = ['red', 'yellow', 'cyan', 'green']
 
 a = []
-P_h = 0.04
-P_z = 0.003
+P_h = 0.1
+P_z = 0.07
+shoot_prob = 0.4
 
+zombie_waitlist = []
 a_point = (1 + P_h - P_z)/(1 - P_h - P_z)
 b_point = (-1 + P_h - P_z)/(1 - P_h - P_z)
 for r in range(N):
     a.append([])
     for c in range(N):
         k = int(rnd(1000)*(a_point - b_point)/1000 + b_point)
-        #k = int(rnd(100)/40 - 1.25)
+        # k = int(rnd(100)/40 - 1.25)
         a[r].append(k)  # начальное положение
 
 
@@ -67,7 +69,6 @@ for y in range(N):
     for x in range(N):
         Cell(x, y)
         # задаем начальную таблицу
-
 
 
 def count_human():
@@ -109,13 +110,36 @@ def zombie_search(x, y):
     return nearest_goal
     # поиск ближайшего человека
 
+
+def human_search(x, y):
+    le = 1
+    found = 0
+    nearest_goal = None
+    while found == 0 and le < 3:
+        for i in range(2 * le + 1):
+            if N > x + le > -1 and N > y - le + i > -1 and a[x + le][y - le + i] == -1:
+                nearest_goal = [x + le, y - le + i]
+                found = 1
+            if N > x - le + i > -1 and N > y - le > -1 and a[x - le + i][y - le] == -1:
+                nearest_goal = [x - le + i, y - le]
+                found = 1
+            if N > x - le > -1 and N > y + le - i > -1 and a[x - le][y + le - i] == -1:
+                nearest_goal = [x - le, y + le - i]
+                found = 1
+            if N > x + le - i > -1 and N > y + 1 > -1 and a[x + le - i][y + 1] == -1:
+                nearest_goal = [x + le - i, y + 1]
+                found = 1
+        le = le + 1
+    return nearest_goal
+    # поиск ближайшего зомби
+
 def the_end():
     raise SystemExit
 
 def zombie_move(x, y):
-
+    global zombie_waitlist
     nearest_goal = zombie_search(x, y)
-    if nearest_goal == None :
+    if nearest_goal == None:
         print('None')
         root.after(4000, the_end)
     elif abs(x - nearest_goal[0]) < 2 and abs(y - nearest_goal[1]) < 2:
@@ -129,53 +153,96 @@ def zombie_move(x, y):
         angl = 0.316
         movement = None
         if (-angl) < sin < angl:
-            if cos > 0 :
-                movement = [1,0]
-            if cos < 0 :
+            if cos > 0:
+                movement = [1, 0]
+            if cos < 0:
                 movement = [-1, 0]
         if (-angl) < cos < angl:
-            if sin > 0 :
-                movement = [0,1]
-            if sin < 0 :
-                movement = [0,-1]
-        if sin > angl and cos > angl :
-            movement = [1,1]
-        if sin < (-angl) and cos > angl :
-            movement = [1,-1]
-        if sin > angl and cos < (-angl) :
-            movement = [-1,1]
-        if sin < (-angl) and cos < (-angl) :
-            movement = [-1,-1]
+            if sin > 0:
+                movement = [0, 1]
+            if sin < 0:
+                movement = [0, -1]
+        if sin > angl and cos > angl:
+            movement = [1, 1]
+        if sin < (-angl) and cos > angl:
+            movement = [1, -1]
+        if sin > angl and cos < (-angl):
+            movement = [-1, 1]
+        if sin < (-angl) and cos < (-angl):
+            movement = [-1, -1]
         if 0 < x + movement[0] < N and 0 < y + movement[1] < N and a[x + movement[0]][y + movement[1]] == 0:
             a[x + movement[0]][y + movement[1]] = 3
             a[x][y] = 0
+        elif a[x + movement[0]][y + movement[1]] == -1 or a[x + movement[0]][y + movement[1]] == 3:
+            zombie_waitlist.append([x,y])
+
+
+
+def human_move(x, y):
+
+    nearest_goal = human_search(x, y)
+    temp_prob = rnd(1000)/1000
+    if nearest_goal is not None:
+        if abs(x - nearest_goal[0]) < 2 and abs(y - nearest_goal[1]) < 2:
+            if temp_prob < shoot_prob:
+                a[nearest_goal[0]][nearest_goal[1]] = 0
+        elif temp_prob < shoot_prob/2:
+            a[nearest_goal[0]][nearest_goal[1]] = 0
+
+
+
+
+
 
 time = 0
 
 def main():
     global time
     time = time + 1
-    for y in range(N):
-        for x in range(N):
-            if a[x][y] == -1:
-                zombie_move(x, y)
-
+    if time % 2 == 0 :# ход зомби
+        zombie_waitlist = []
+        for y in range(N):
+            for x in range(N):
+                if a[x][y] == -1:
+                    zombie_move(x, y)
+        i = 0
+        while i < len(zombie_waitlist):
+            zombie_move(zombie_waitlist[i])
+            i = i+1
         # первый проход, людей едят
 
-    for y in range(N):
-        for x in range(N):
-            if a[x][y] == 3:
-                a[x][y] = -1
+        for y in range(N):
+            for x in range(N):
+                if a[x][y] == 3:
+                    a[x][y] = -1
         # второй проход, люди становятся зомби
+
+    else: # ход людей
+        for y in range(N):
+            for x in range(N):
+                if a[x][y] == 1:
+                    human_move(x, y)
+
+
+
+
+
+
+
+
+
 
     human = count_human()
     zombie = count_zombie()
-    print (time, zombie)
+    print(time, zombie)
 
     for y in range(N):
         for x in range(N):
             Cell(x, y)
     root.after(300, main)
+    # отрисовка текущей ситуации
+
+
 
 root.after(4000, main)
 root.mainloop()
