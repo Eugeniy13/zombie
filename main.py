@@ -2,6 +2,15 @@ from random import randrange as rnd
 from tkinter import *
 import math
 
+
+shoot_prob = 0.25
+troop_size = 10
+P = 1
+P_h = P*0.1/(P+1)
+P_z = 0.1/(P+1)
+
+
+
 root = Tk()
 root.geometry('800x600')
 
@@ -16,30 +25,27 @@ nr = N  # количество строк
 nc = N  # количество столбцов
 x0 = m // 2  # отступ от левого края
 y0 = m // 2  # отступ от вернего края
-colors = ['red', 'yellow', 'cyan', 'green']
+colors = ['red', 'cyan', 'green']
 
 a = []
 human = []
 zombie = []
-troop_size = 10
-P_h = 0.03
-P_z = 0.03
-
-shoot_prob = 0.25
-
 zombie_waitlist = []
-a_point = (1 + P_h - P_z)/(1 - P_h - P_z)
-b_point = (-1 + P_h - P_z)/(1 - P_h - P_z)
 
-def starting():
+#size_array = [1,2,4,5,8,10,20,40]
+#P_array = [0.5, 1, 2]
+
+def starting(): # геренируется начальное положение
+    a_point = (1 + P_h - P_z) / (1 - P_h - P_z)
+    b_point = (-1 + P_h - P_z) / (1 - P_h - P_z)
     for r in range(N):
         a.append([])
         for c in range(N):
             k = int(rnd(1000)*(a_point - b_point)/1000 + b_point)
-            # k = int(rnd(100)/40 - 1.25)
-            a[r].append(k)  # начальное положение
+            #формула обеспечивает правильное соотношение количества людей к зомби
+            a[r].append(k)
 
-starting()
+# графическое отображение
 
 class Cell():
 
@@ -71,12 +77,7 @@ class Cell():
         canv.itemconfig(self.id, fill=self.color)
 # графическое отображение
 
-'''
-for y in range(N):
-    for x in range(N):
-        Cell(x, y)
-        # задаем начальную таблицу
-'''
+
 
 def count_human():
     c_human = 0
@@ -184,6 +185,9 @@ def zombie_move(x, y):
             movement = [-1, -1]
 
             # обход препятствия
+
+            # да, знаю, лучше было написать функцию, а не копировать почти одикаровые куски кода
+
         if a[x + movement[0]][y + movement[1]] == 5 or a[x + movement[0]][y + movement[1]] == 3: #поворот направо
             if movement == [0,1]:
                 movement = [1,1]
@@ -283,7 +287,7 @@ def zombie_move(x, y):
         if -1 < x + movement[0] < N and -1 < y + movement[1] < N and a[x + movement[0]][y + movement[1]] == 0:
             a[x + movement[0]][y + movement[1]] = 3
             a[x][y] = 0
-        elif a[x + movement[0]][y + movement[1]] == -1 or a[x + movement[0]][y + movement[1]] == 3:
+        elif -1 < x + movement[0] < N and -1 < y + movement[1] < N and (a[x + movement[0]][y + movement[1]] == -1 or a[x + movement[0]][y + movement[1]] == 3):
             zombie_waitlist.append([x,y])
 
 
@@ -315,23 +319,24 @@ def friend_search(x,y):
     if sin < (-angl) and cos < (-angl):
         movement = [-1, -1]
 
-    if a[x + movement[0]][y + movement[1]] == 5:  # поворот направо
-        if movement == [0, 1]:
-            movement = [1, 1]
-        elif movement == [1, 1]:
-            movement = [1, 0]
-        elif movement == [1, 0]:
-            movement = [1, -1]
-        elif movement == [1, -1]:
-            movement = [0, -1]
-        elif movement == [0, -1]:
-            movement = [-1, -1]
-        elif movement == [-1, -1]:
-            movement = [-1, 0]
-        elif movement == [-1, 0]:
-            movement = [-1, 1]
-        elif movement == [-1, 1]:
-            movement = [0, 1]
+    if 0 < x + movement[0] < N and 0 < y + movement[1] < N:
+        if a[x + movement[0]][y + movement[1]] == 5:  # поворот направо
+            if movement == [0, 1]:
+                movement = [1, 1]
+            elif movement == [1, 1]:
+                movement = [1, 0]
+            elif movement == [1, 0]:
+                movement = [1, -1]
+            elif movement == [1, -1]:
+                movement = [0, -1]
+            elif movement == [0, -1]:
+                movement = [-1, -1]
+            elif movement == [-1, -1]:
+                movement = [-1, 0]
+            elif movement == [-1, 0]:
+                movement = [-1, 1]
+            elif movement == [-1, 1]:
+                movement = [0, 1]
 
     if 0 < x + movement[0] < N and 0 < y + movement[1] < N:
         if a[x + movement[0]][y + movement[1]] == 5:  # поворот налево
@@ -435,12 +440,22 @@ def human_move(x, y):
 
 time = 0
 
+starting()
+
+for y in range(N):
+    for x in range(N):
+        Cell(x, y)
+        # задаем начальную таблицу
+
 human.append(count_human())
 zombie.append(count_zombie())
 #print(time, human[time], zombie[time])
 
 def main():
+    #global t
+    #global won
     global time
+    #global survived
     time = time + 1
 
     if time % 2 == 0 :# ход зомби
@@ -479,15 +494,37 @@ def main():
     if human[time] == 0:
         t = time
         print('Конец цивилизации   t = ',time)
-    elif time > 50 and human[time] == human[time-50]:
-        t = time-50
-        print('Есть выжившие   t = ', time-50)
+        for y in range(N):
+            for x in range(N):
+               Cell(x, y)
+    elif time > 100 and human[time] == human[time-100]:
+        for y in range(N):
+            for x in range(N):
+                Cell(x, y)
+        if human[time] > zombie[time]:
+            print('Люди победили!!!!!!!!!!!!!!!!   t = ', time - 100)
+            #won = won + 1
+
+        else:
+            print('Есть выжившие   t = ', time-100)
+            #survived = survived + 1
+            #t = time - 100
+    elif zombie[time] == 0:
+        print('Люди победили!!!!!!!!!!!!!!!!   t = ', time)
+        #won = won + 1
+        for y in range(N):
+            for x in range(N):
+                Cell(x, y)
     else:
-        main()
-        #for y in range(N):
-        #    for x in range(N):
-        #        Cell(x, y)
-        #root.after(300, main)
+        for y in range(N):
+            for x in range(N):
+                Cell(x, y)
+        print('time = ',time,'human = ',human[time],'zombie = ', zombie[time])
+        #main()
+        for y in range(N):
+            for x in range(N):
+                Cell(x, y)
+        root.after(500, main)
         # отрисовка текущей ситуации
 '''
     for y in range(N):
@@ -495,20 +532,100 @@ def main():
             Cell(x, y)
     root.after(300, main)
     # отрисовка текущей ситуации
-'''
+
+ggg = 0
+
+
+
+result_won = [[[None for k in range(8)] for j in range(10)] for i in range(20)]
+result_time = [[[None for k in range(8)] for j in range(10)] for i in range(20)]
+result_survived = [[[None for k in range(8)] for j in range(10)] for i in range(20)]
+
+for i in range(5):
+    # = i/30
+    A = 0.30 + i/50
+    shoot_prob = A
+    for j in range(3):
+        P = P_array[j]
+        P_h = P*0.1/(P+1)
+        P_z = 0.1/(P+1)
+        for k in range(8):
+            troop_size = size_array[k]
+
+            starting()
+            Sum = 0
+            survived = 0
+            N_global = 30
+            won = 0
+            for paralel in range(N_global):
+                human.append(count_human())
+                zombie.append(count_zombie())
+                main()
+                Sum = Sum + t
+                t = 0
+                time = 0
+                a = []
+                starting()
+                human = []
+                zombie = []
+
+
+            won = won / N_global
+            survived = survived / N_global
+            Sum = Sum / (N_global-won)
+            print(A, P_h, P_z, troop_size, Sum, won, survived)
+            result_won[i][j][k] = won
+            result_time[i][j][k] = Sum
+
+            ggg = ggg + 1
+        print(ggg)
+
+
+f = open('t_time.txt', 'a')
+
+for i in range(20):
+    for j in range(10):
+        for k in range(8):
+            f.write(str(result_time[i][j][k]) + '\n')
+
+f.close()
+
+f = open('t_won.txt', 'a')
+
+for i in range(20):
+    for j in range(10):
+        for k in range(8):
+            f.write(str(result_won[i][j][k]) + '\n')
+
+f.close()
+
+f = open('t_survived.txt', 'a')
+
+for i in range(20):
+    for j in range(10):
+        for k in range(8):
+            f.write(str(result_survived[i][j][k]) + '\n')
+
+f.close()
+
+
+shoot_prob = 0.26
+P_h = 0.06
+P_z = 0.04
+troop_size = 10
+
 starting()
 
-for paralel in range(10):
-    human.append(count_human())
-    zombie.append(count_zombie())
-    main()
-    #print(t)
-    t = 0
-    time = 0
-    a = []
-    starting()
-    human = []
-    zombie = []
+Sum = 0
+survived = 0
+N_global = 30
+won = 0
+human.append(count_human())
+zombie.append(count_zombie())
+main()
 
-#root.after(4000, main)
-#root.mainloop()
+'''
+
+root.after(1800, main)
+root.mainloop()
+
